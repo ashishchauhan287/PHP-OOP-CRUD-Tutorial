@@ -11,6 +11,7 @@ class Product{
 	public $price;
 	public $description;
 	public $category_id;
+	public $image;
 	public $timestamp;
 
 
@@ -22,7 +23,7 @@ class Product{
 	function create()
 	{
 		$this->timestamp = date('Y-m-d H:i:s');
-		$query = "INSERT INTO `products`( `name`, `description`, `price`, `category_id`, `created`) VALUES ('{$this->name}','{$this->description}','{$this->price}','{$this->category_id}','{$this->timestamp}')"; 
+		$query = "INSERT INTO `products`( `name`, `description`, `price`, `category_id`,`image`,`created`) VALUES ('{$this->name}','{$this->description}','{$this->price}','{$this->category_id}','{$this->image}','{$this->timestamp}')"; 
 		if($this->conn->query($query))
 		{
 			return true;
@@ -58,7 +59,7 @@ class Product{
 	// Read one product data
 	function readone()
 	{
-		$query = "SELECT name, price, description, category_id FROM ".$this->table_name." WHERE id = ".$this->id." LIMIT 0,1";
+		$query = "SELECT name, price, description, category_id, image FROM ".$this->table_name." WHERE id = ".$this->id." LIMIT 0,1";
 
 		$stmt = $this->conn->query($query);
 		$row = $stmt->fetch_assoc();
@@ -67,6 +68,7 @@ class Product{
 		$this->price = $row['price'];
 		$this->description = $row['description'];
 		$this->category_id = $row['category_id'];
+		$this->image = $row['image'];
 	}
 
 	// Update Product Data
@@ -159,6 +161,78 @@ class Product{
         $stmt = $this->conn->query($query);
         $row = $stmt->fetch_assoc();
         return $row['total_rows'];
+	}
+
+	// will upload image file to server
+	function uploadPhoto(){
+		$result_message = "";
+
+		// now, if image is not empty, try to upload the image
+		if($this->image){
+
+			// sha1_file() function is used to make a unique file name
+			$target_directory = "uploads/";
+			$target_file = $target_directory . $this->image;
+			$file_type = pathinfo($target_file , PATHINFO_EXTENSION);
+
+			// ERROR message is empty
+			$file_upload_error_messages = "";
+
+			// make sure that file is a real image
+			$check = getimagesize($_FILES['image']['tmp_name']);
+			if($check!==false){
+				// Submitted file is an image
+			}else{
+				$file_upload_error_messages.="<div> Submitted file is not an image.</div>";
+			}
+
+			// make sure certain file types are allowed
+			$allowed_file_types = array("jpg","jpeg","png","gif");
+			if(!in_array($file_type, $allowed_file_types)){
+				$file_upload_error_messages."<div>Only JPG, JPEG, PNG, GIF files are allowed";
+			}
+
+			// make sure file does not exist
+			if(file_exists($target_file)){
+				$file_upload_error_messages.="<div>Image already exists. Try to change file name.</div>";
+			}
+
+			// make sure submittted file is not too large, can't be larger then 1 MB
+			if($_FILES['image']['size'] > (1024000)){
+				$file_upload_error_messages.="<div>Image must be less than 1 MB in size.</div>";
+			}
+
+			// make sure the 'uploads' folder exists
+			// if not, create it
+			if(!is_dir($target_directory)){
+			    mkdir($target_directory, 0777, true);
+			}
+
+
+			// if $file_upload_error_messages is still empty
+			if(empty($file_upload_error_messages)){
+			    // it means there are no errors, so try to upload the file
+			    if(move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)){
+			        // it means photo was uploaded
+			    }else{
+			        $result_message.="<div class='alert alert-danger'>";
+			            $result_message.="<div>Unable to upload photo.</div>";
+			            $result_message.="<div>Update the record to upload photo.</div>";
+			        $result_message.="</div>";
+			    }
+			}
+			 
+			// if $file_upload_error_messages is NOT empty
+			else{
+			    // it means there are some errors, so show them to user
+			    $result_message.="<div class='alert alert-danger'>";
+			        $result_message.="{$file_upload_error_messages}";
+			        $result_message.="<div>Update the record to upload photo.</div>";
+			    $result_message.="</div>";
+			}
+		}
+
+		return $result_message;
 	}
 
 }

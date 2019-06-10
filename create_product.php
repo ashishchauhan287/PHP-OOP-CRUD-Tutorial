@@ -21,6 +21,8 @@ include_once "layout_header.php";
 echo "<div class='right-button-margin'>";
     echo "<a href='index.php' class='btn btn-default pull-right'>Read Products</a>";
 echo "</div>";
+
+
  
 ?>
 <?php 
@@ -31,7 +33,11 @@ if(isset($_POST['CatSubmit']) ){
     $product->price = htmlspecialchars(strip_tags($_POST['price']));
     $product->description = htmlspecialchars(strip_tags($_POST['description']));
     $product->category_id = htmlspecialchars(strip_tags($_POST['category_id']));
+    $image=!empty($_FILES['image']['name']) ? sha1_file($_FILES['image']['tmp_name'])."-".basename($_FILES['image']['name']) : "";
+    $product->image = htmlspecialchars(strip_tags($image));
  
+  	// try to upload the submitted file
+ 	$product->uploadPhoto();
     // create the product
     if($product->create()){
         echo "<div class='alert alert-success'>Product was created.</div>";
@@ -43,7 +49,7 @@ if(isset($_POST['CatSubmit']) ){
     }
 }
 ?>
-<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post">
+<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" enctype="multipart/form-data">
  
     <table class='table table-hover table-responsive table-bordered'>
  
@@ -61,7 +67,10 @@ if(isset($_POST['CatSubmit']) ){
             <td>Description</td>
             <td><textarea name='description' class='form-control'></textarea></td>
         </tr>
- 
+		 <tr>
+		    <td>Photo</td>
+		    <td><input type="file" name="image" /></td>
+		</tr>
         <tr>
             <td>Category</td>
             <td>
